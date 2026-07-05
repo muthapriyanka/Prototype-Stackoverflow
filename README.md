@@ -186,31 +186,3 @@ Reindex endpoint:
 ```bash
 curl -s -X POST http://localhost:8080/search/reindex
 ```
-
-## Deployment Notes
-
-For a no-cost demo, the easiest path is:
-
-- Deploy the React frontend on Vercel
-- Keep the full backend stack local and expose it temporarily with a tunnel
-
-For a cloud demo, use environment variables and consider disabling Kafka or
-Elasticsearch first if the target platform does not provide free managed
-services.
-
-Useful flags:
-
-```bash
-APP_KAFKA_ENABLED=false
-APP_SEARCH_ENABLED=false
-```
-
-## Project Structure
-
-```text
-backend/                 Spring Boot API
-stackoverflow-frontend/  React UI
-docker-compose.yml       Local MySQL, Redis, Kafka, Kafka UI, Elasticsearch
-scripts/                 Local demo seed data
-docs/assets/             README screenshots
-```
