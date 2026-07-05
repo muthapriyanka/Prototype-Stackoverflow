@@ -13,6 +13,7 @@ public class QuestionRequest {
     private String title;
     private String body;
     private List<String> tagIds;
+    private List<String> tagNames;
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -22,4 +23,7 @@ public class QuestionRequest {
 
     public List<String> getTagIds() { return tagIds; }
     public void setTagIds(List<String> tagIds) { this.tagIds = tagIds; }
+
+    public List<String> getTagNames() { return tagNames; }
+    public void setTagNames(List<String> tagNames) { this.tagNames = tagNames; }
 }

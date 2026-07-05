@@ -1,39 +1,36 @@
-// package com.example.demo.controller;
-// import org.springframework.security.core.Authentication;
-// import org.springframework.web.bind.annotation.PostMapping;
-// import org.springframework.web.bind.annotation.RequestBody;
-// import org.springframework.web.bind.annotation.RequestMapping;
-// import org.springframework.web.bind.annotation.RestController;
+package com.example.demo.controller;
 
-// import com.example.demo.User;
-// import com.example.demo.Vote;
-// import com.example.demo.VoteRequest;
-// import com.example.demo.repository.UserRepository;
-// //import com.example.demo.service.VoteService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-// @RestController
-// @RequestMapping("/votes")
-// public class VoteController {
+import com.example.demo.User;
+import com.example.demo.VoteRequest;
+import com.example.demo.VoteResponse;
+import com.example.demo.service.VoteService;
 
-//     // private final VoteService voteService;
-//      private final UserRepository userRepository;
+import jakarta.servlet.http.HttpServletRequest;
 
-//     // public VoteController(VoteService voteService, UserRepository userRepository) {
-//     //     this.voteService = voteService;
-//     //     this.userRepository = userRepository;
-//     // }
+@RestController
+@RequestMapping("/votes")
+public class VoteController {
 
-//     @PostMapping
-//     public Vote createVote(@RequestBody VoteRequest request, Authentication authentication) {
+    private final VoteService voteService;
 
-//         // Step 1: get username from the JWT-authenticated user
-//         String username = authentication.getName(); 
+    public VoteController(VoteService voteService) {
+        this.voteService = voteService;
+    }
 
-//         // Step 2: fetch the full User entity from DB
-//         User user = userRepository.findByUsername(username)
-//                         .orElseThrow(() -> new RuntimeException("User not found"));
+    @PostMapping
+    public VoteResponse vote(@RequestBody VoteRequest request, HttpServletRequest httpRequest) {
+        User user = (User) httpRequest.getAttribute("user");
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You must be logged in to vote");
+        }
 
-//         // Step 3: pass User entity to vote service
-//         return voteService.createVote(request, user);
-//     }
-// }
+        return voteService.vote(request, user);
+    }
+}

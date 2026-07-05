@@ -1,6 +1,11 @@
 package com.example.demo;
 
-public class AnswerDTO {
+import java.io.Serializable;
+
+public class AnswerDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String body;
     private String username;

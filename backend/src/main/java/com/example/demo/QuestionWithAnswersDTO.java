@@ -1,8 +1,12 @@
 package com.example.demo;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class QuestionWithAnswersDTO {
+public class QuestionWithAnswersDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String title;
     private String body;
@@ -39,5 +43,4 @@ public QuestionWithAnswersDTO() {}
         this.answers = answers;
     }
 }
-
 

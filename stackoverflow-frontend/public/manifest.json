@@ -1,0 +1,15 @@
+{
+  "short_name": "Prototype SO",
+  "name": "Prototype of Stackoverflow",
+  "icons": [
+    {
+      "src": "stackoverflow-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#f48024",
+  "background_color": "#ffffff"
+}

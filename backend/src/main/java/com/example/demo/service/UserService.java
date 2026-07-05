@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.User;
+import com.example.demo.UserSummary;
 import com.example.demo.repository.UserRepository;
 
 @Service
@@ -22,8 +23,15 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserSummary> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> new UserSummary(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getCreatedAt()
+                ))
+                .toList();
     }
 
     public Optional<User> getUserById(String id) {

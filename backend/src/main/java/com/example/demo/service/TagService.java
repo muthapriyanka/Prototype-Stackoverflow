@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Tag;
+import com.example.demo.TagDTO;
 import com.example.demo.repository.TagRepository;
 
 @Service
@@ -21,8 +23,11 @@ public class TagService {
         return tagRepository.save(tag);
     }
 
-    public List<Tag> getAllTags() {
-        return tagRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<TagDTO> getAllTags() {
+        return tagRepository.findAll().stream()
+                .map(tag -> new TagDTO(tag.getId(), tag.getName(), tag.getQuestions().size()))
+                .toList();
     }
 
     public Optional getTagByName(String name) {

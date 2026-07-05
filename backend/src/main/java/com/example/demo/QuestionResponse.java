@@ -1,9 +1,12 @@
 package com.example.demo;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class QuestionResponse {
+public class QuestionResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String id;
     private String title;
@@ -12,6 +15,9 @@ public class QuestionResponse {
     private int answerCount;
     private LocalDateTime createdAt;
     private List<TagDTO> tags;
+
+    public QuestionResponse() {
+    }
 
      public QuestionResponse(String id, String title, String body, long voteCount, int answerCount, LocalDateTime createdAt, List<TagDTO> tags) {
         this.id = id;
@@ -33,7 +39,7 @@ public class QuestionResponse {
     public void setBody(String body) { this.body = body; }
 
     public long getVoteCount() { return voteCount; }
-    public void setVoteCount(int voteCount) { this.voteCount = voteCount; }
+    public void setVoteCount(long voteCount) { this.voteCount = voteCount; }
 
     public int getAnswerCount() { return answerCount; }
     public void setAnswerCount(int answerCount) { this.answerCount = answerCount; }
@@ -50,4 +56,3 @@ public class QuestionResponse {
     }
 
 }
-

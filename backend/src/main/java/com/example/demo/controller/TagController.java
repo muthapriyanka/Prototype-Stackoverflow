@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Tag;
+import com.example.demo.TagDTO;
 import com.example.demo.service.TagService;
 
 @RestController
@@ -22,7 +23,7 @@ public class TagController {
     }
 
     @GetMapping
-    public List<Tag> getAllTags() {
+    public List<TagDTO> getAllTags() {
         return tagService.getAllTags();
     }
 

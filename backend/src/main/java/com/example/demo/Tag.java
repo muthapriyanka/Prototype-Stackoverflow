@@ -49,10 +49,13 @@ public class Tag {
         return createdAt;
     }
 
+    public Set<Question> getQuestions() {
+        return questions;
+    }
+
     // setters (optional but recommended)
     public void setName(String name) {
         this.name = name;
     }
 }
-
 
