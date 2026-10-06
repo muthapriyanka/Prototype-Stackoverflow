@@ -1,0 +1,137 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: stackoverflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-stackoverflow_db}
+      MYSQL_USER: ${MYSQL_USER:-stackoverflow_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stackoverflow_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: stackoverflow-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: stackoverflow-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: stackoverflow-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "INTERNAL://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: stackoverflow-kafka-ui
+    restart: unless-stopped
+    profiles:
+      - tools
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_UI_PORT:-8085}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: production
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  backend:
+    build:
+      context: ./backend
+    container_name: stackoverflow-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-stackoverflow_db}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-stackoverflow_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-stackoverflow_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CONSUMER_GROUP_ID: stackoverflow-api-prod
+      STACKOVERFLOW_FEED_CONSUMER_GROUP: stackoverflow-feed-prod
+      STACKOVERFLOW_SEARCH_CONSUMER_GROUP: stackoverflow-search-indexer-prod
+      STACKOVERFLOW_EVENTS_TOPIC: stackoverflow.events
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX: stackoverflow_questions
+      APP_KAFKA_ENABLED: "true"
+      APP_SEARCH_ENABLED: "true"
+      SPRING_JPA_DDL_AUTO: update
+    expose:
+      - "8080"
+
+  frontend:
+    build:
+      context: ./stackoverflow-frontend
+      args:
+        REACT_APP_API_BASE_URL: /api
+    container_name: stackoverflow-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+volumes:
+  mysql_data:
+  redis_data:
+  elasticsearch_data:

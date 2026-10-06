@@ -20,6 +20,7 @@ public class QuestionDetailResponse implements Serializable {
     private long voteCount;
     private LocalDateTime createdAt;
     private List<String> tags;
+    private List<CommentDTO> comments;
     private List<AnswerDTO> answers;
 
     public QuestionDetailResponse(
@@ -29,6 +30,7 @@ public class QuestionDetailResponse implements Serializable {
         long voteCount,
         LocalDateTime createdAt,
         List<String> tags,
+        List<CommentDTO> comments,
         List<AnswerDTO> answers
     ) {
         this.id = id;
@@ -37,6 +39,7 @@ public class QuestionDetailResponse implements Serializable {
         this.voteCount = voteCount;
         this.createdAt = createdAt;
         this.tags = tags;
+        this.comments = comments;
         this.answers = answers;
     }
 

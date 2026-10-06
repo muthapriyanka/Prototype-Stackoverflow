@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "./services/api";
 
 function PostQuestion({ onQuestionPosted = () => {} }) {
   const [title, setTitle] = useState("");
@@ -7,7 +8,7 @@ function PostQuestion({ onQuestionPosted = () => {} }) {
   const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8080/tags")
+    fetch(`${API_BASE_URL}/tags`)
       .then((res) => res.json())
       .then((data) => setAvailableTags(Array.isArray(data) ? data : []))
       .catch((err) => console.error(err));
@@ -46,7 +47,7 @@ function PostQuestion({ onQuestionPosted = () => {} }) {
         tagNames: parsedTags,
       };
 
-      const response = await fetch("http://localhost:8080/questions", {
+      const response = await fetch(`${API_BASE_URL}/questions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

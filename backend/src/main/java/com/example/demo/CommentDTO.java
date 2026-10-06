@@ -2,30 +2,26 @@ package com.example.demo;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 
-public class AnswerDTO implements Serializable {
+public class CommentDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private String id;
     private String body;
     private String username;
-    private long voteCount;
-    private boolean accepted;
     private LocalDateTime createdAt;
-    private List<CommentDTO> comments;
 
-    // Constructors
-    public AnswerDTO() {}
+    public CommentDTO() {
+    }
 
-    public AnswerDTO(String id, String body, String username) {
+    public CommentDTO(String id, String body, String username, LocalDateTime createdAt) {
         this.id = id;
         this.body = body;
         this.username = username;
+        this.createdAt = createdAt;
     }
 
-    // Getters & Setters
     public String getId() {
         return id;
     }
@@ -50,35 +46,11 @@ public class AnswerDTO implements Serializable {
         this.username = username;
     }
 
-    public long getVoteCount() {
-        return voteCount;
-    }
-
-    public void setVoteCount(long voteCount) {
-        this.voteCount = voteCount;
-    }
-
-    public boolean isAccepted() {
-        return accepted;
-    }
-
-    public void setAccepted(boolean accepted) {
-        this.accepted = accepted;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public List<CommentDTO> getComments() {
-        return comments;
-    }
-
-    public void setComments(List<CommentDTO> comments) {
-        this.comments = comments;
     }
 }

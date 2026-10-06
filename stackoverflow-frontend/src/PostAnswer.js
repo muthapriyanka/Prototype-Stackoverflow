@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "./services/api";
 
 export default function PostAnswer({ questionId, onAnswerPosted }) {
   const [body, setBody] = useState("");
@@ -13,7 +14,7 @@ export default function PostAnswer({ questionId, onAnswerPosted }) {
         return;
       }
 
-      const response = await fetch("http://localhost:8080/answers", {
+      const response = await fetch(`${API_BASE_URL}/answers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

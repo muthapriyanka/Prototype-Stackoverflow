@@ -10,18 +10,30 @@ import com.example.demo.User;
 import com.example.demo.Vote;
 import com.example.demo.VoteRequest;
 import com.example.demo.VoteResponse;
+import com.example.demo.repository.AnswerRepository;
+import com.example.demo.repository.QuestionRepository;
 import com.example.demo.repository.VoteRepository;
 
 @Service
 public class VoteService {
 
     private final VoteRepository voteRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
     private final FeedService feedService;
 
     private final KafkaEventProducer kafkaEventProducer;
 
-public VoteService(VoteRepository voteRepository, FeedService feedService, KafkaEventProducer kafkaEventProducer) {
+public VoteService(
+        VoteRepository voteRepository,
+        QuestionRepository questionRepository,
+        AnswerRepository answerRepository,
+        FeedService feedService,
+        KafkaEventProducer kafkaEventProducer
+) {
     this.voteRepository = voteRepository;
+    this.questionRepository = questionRepository;
+    this.answerRepository = answerRepository;
     this.feedService = feedService;
     this.kafkaEventProducer = kafkaEventProducer;
 }
@@ -38,6 +50,7 @@ public VoteService(VoteRepository voteRepository, FeedService feedService, Kafka
         if (request.getValue() != 1 && request.getValue() != -1) {
             throw new IllegalArgumentException("value must be 1 or -1");
         }
+        validateEntityExists(request);
 
         Vote.VoteType requestedVoteType = request.getValue() == 1
                 ? Vote.VoteType.UP
@@ -83,5 +96,17 @@ public VoteService(VoteRepository voteRepository, FeedService feedService, Kafka
 }
 
         return new VoteResponse(request.getEntityId(), request.getEntityType(), userVote, voteCount);
+    }
+
+    private void validateEntityExists(VoteRequest request) {
+        if (request.getEntityType() == Vote.EntityType.QUESTION
+                && !questionRepository.existsById(request.getEntityId())) {
+            throw new IllegalArgumentException("Question not found");
+        }
+
+        if (request.getEntityType() == Vote.EntityType.ANSWER
+                && !answerRepository.existsById(request.getEntityId())) {
+            throw new IllegalArgumentException("Answer not found");
+        }
     }
 }

@@ -49,6 +49,10 @@ public List<QuestionWithAnswersDTO> getQuestionsWithAnswers() {
             adto.setBody(a.getBody());
 
             adto.setUsername(a.getUsername() != null ? a.getUsername() : "Unknown");
+            adto.setVoteCount(a.getVoteCount());
+            adto.setAccepted(a.isAccepted());
+            adto.setCreatedAt(a.getCreatedAt());
+            adto.setComments(a.getComments());
 
             return adto;
         }).toList();

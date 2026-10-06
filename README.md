@@ -186,3 +186,62 @@ Reindex endpoint:
 ```bash
 curl -s -X POST http://localhost:8080/search/reindex
 ```
+
+## Deployment Notes
+
+For a no-cost full-stack demo, use a free VM such as Oracle Cloud Always Free
+and run the production Docker Compose stack. This is better than Vercel-only
+hosting for this project because the app needs long-running services: Spring
+Boot, MySQL, Redis, Kafka, and Elasticsearch.
+
+Production deployment files:
+
+- `backend/Dockerfile`: builds the Spring Boot API
+- `stackoverflow-frontend/Dockerfile`: builds the React app and serves it with
+  Nginx
+- `stackoverflow-frontend/nginx.conf`: proxies `/api/*` to the backend
+- `docker-compose.prod.yml`: runs frontend, backend, MySQL, Redis, Kafka, and
+  Elasticsearch together
+- `.env.production.example`: production environment variables template
+
+On the server:
+
+```bash
+git clone https://github.com/muthapriyanka/Prototype-Stackoverflow.git
+cd Prototype-Stackoverflow
+
+cp .env.production.example .env.production
+# Edit passwords before starting
+nano .env.production
+
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+```
+
+Only the frontend is exposed publicly on `FRONTEND_PORT` by default. The React
+app calls the backend through `/api`, and Nginx proxies that request to the
+private backend container.
+
+Health check after deploy:
+
+```bash
+curl -s http://YOUR_SERVER_IP/api/actuator/health
+```
+
+Optional Kafka UI for debugging:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile tools up -d kafka-ui
+```
+
+Then open `http://YOUR_SERVER_IP:8085` if your firewall allows that port.
+
+## Project Structure
+
+```text
+backend/                 Spring Boot API
+stackoverflow-frontend/  React UI
+docker-compose.yml       Local MySQL, Redis, Kafka, Kafka UI, Elasticsearch
+docker-compose.prod.yml  Production full-stack Docker Compose
+scripts/                 Local demo seed data
+docs/assets/             README screenshots
+```
