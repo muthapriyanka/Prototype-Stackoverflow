@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -114,7 +115,41 @@ public class FeedService {
             default -> feedItemRepository.findAllByOrderByLatestActivityAtDesc();
         };
 
+        if (items.isEmpty()) {
+            return getFeedFromQuestions(sort);
+        }
+
         return toResponses(items);
+    }
+
+    private List<FeedItemResponse> getFeedFromQuestions(String sort) {
+        List<FeedItemResponse> responses = questionRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+        String normalizedSort = sort == null ? "active" : sort.toLowerCase();
+        Comparator<FeedItemResponse> comparator = switch (normalizedSort) {
+            case "newest" -> Comparator.comparing(
+                    FeedItemResponse::getCreatedAt,
+                    Comparator.nullsLast(LocalDateTime::compareTo)
+            ).reversed();
+            case "score" -> Comparator.comparingInt(FeedItemResponse::getVoteCount).reversed()
+                    .thenComparing(Comparator.comparing(
+                            FeedItemResponse::getLatestActivityAt,
+                            Comparator.nullsLast(LocalDateTime::compareTo)
+                    ).reversed());
+            case "active" -> Comparator.comparing(
+                    FeedItemResponse::getLatestActivityAt,
+                    Comparator.nullsLast(LocalDateTime::compareTo)
+            ).reversed();
+            default -> Comparator.comparing(
+                    FeedItemResponse::getLatestActivityAt,
+                    Comparator.nullsLast(LocalDateTime::compareTo)
+            ).reversed();
+        };
+        responses.sort(comparator);
+        return responses;
     }
 
     private List<FeedItemResponse> toResponses(List<FeedItem> items) {
@@ -143,6 +178,31 @@ public class FeedService {
                 item.getVoteCount(),
                 item.getLatestActivityAt(),
                 item.getCreatedAt(),
+                tags
+        );
+    }
+
+    private FeedItemResponse toResponse(Question question) {
+        LocalDateTime latestActivityAt = question.getAnswers().stream()
+                .map(answer -> answer.getCreatedAt())
+                .filter(date -> date != null)
+                .max(LocalDateTime::compareTo)
+                .orElse(question.getCreatedAt());
+
+        List<TagDTO> tags = question.getTags().stream()
+                .map(tag -> new TagDTO(tag.getId(), tag.getName()))
+                .sorted(Comparator.comparing(TagDTO::getName))
+                .toList();
+
+        return new FeedItemResponse(
+                question.getId(),
+                question.getId(),
+                question.getTitle(),
+                question.getBody(),
+                question.getAnswers().size(),
+                voteRepository.getVoteCount(question.getId(), Vote.EntityType.QUESTION),
+                latestActivityAt,
+                question.getCreatedAt(),
                 tags
         );
     }

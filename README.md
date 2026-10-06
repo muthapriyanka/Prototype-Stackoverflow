@@ -189,6 +189,52 @@ curl -s -X POST http://localhost:8080/search/reindex
 
 ## Deployment Notes
 
+### Render + Vercel Demo
+
+Use this path when you want a free hosted demo without adding a card.
+
+This mode deploys:
+
+- Render: Spring Boot backend
+- Vercel: React frontend
+- H2 database on Render for lightweight demo storage
+- Simple in-memory Spring cache
+
+Kafka, Redis, MySQL, and Elasticsearch are disabled in this hosted demo mode.
+They remain part of the local/full Docker setup.
+Data in the free hosted demo should be treated as temporary.
+
+Render backend:
+
+1. Push this repo to GitHub.
+2. In Render, create a new Blueprint from this repo.
+3. Render reads `render.yaml` and builds the backend from `backend/Dockerfile`.
+4. After deploy, copy your Render backend URL, for example:
+
+```text
+https://prototype-stackoverflow-api.onrender.com
+```
+
+Vercel frontend:
+
+1. Import the same GitHub repo in Vercel.
+2. Set the root directory to `stackoverflow-frontend`.
+3. Add environment variable:
+
+```text
+REACT_APP_API_BASE_URL=https://YOUR_RENDER_BACKEND.onrender.com
+```
+
+4. Deploy.
+
+If you use a custom Vercel domain, add it to the backend CORS env var on Render:
+
+```text
+APP_CORS_ALLOWED_ORIGINS=https://*.vercel.app,https://your-domain.com,http://localhost:*,http://127.0.0.1:*
+```
+
+### Full Docker Stack
+
 For a no-cost full-stack demo, use a free VM such as Oracle Cloud Always Free
 and run the production Docker Compose stack. This is better than Vercel-only
 hosting for this project because the app needs long-running services: Spring
