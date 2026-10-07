@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -66,7 +68,12 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-    User user = userService.login(request.getUsername(), request.getPassword());
+    User user;
+    try {
+        user = userService.login(request.getUsername(), request.getPassword());
+    } catch (IllegalArgumentException ex) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
 
     String token = jwtUtil.generateToken(user);
 
