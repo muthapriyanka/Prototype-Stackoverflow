@@ -14,6 +14,11 @@ public class CacheConfig {
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "simple")
     @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager simpleCacheManager() {
-        return new ConcurrentMapCacheManager("questionResponsesById", "questionDetails");
+        return new ConcurrentMapCacheManager(
+                "questions",
+                "questionResponses",
+                "questionResponsesById",
+                "questionDetails"
+        );
     }
 }
