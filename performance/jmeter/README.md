@@ -89,6 +89,38 @@ Local-only cache reset:
 docker compose exec redis redis-cli FLUSHALL
 ```
 
+### AWS Load-Balancer Test
+
+The AWS load balancer exposes backend routes under `/api`, so pass
+`-JbasePath=/api`. Without it, `/questions/...` is handled by the React/Nginx
+fallback and does not measure the Spring Boot API. The test plan also asserts
+that the response contains question-detail JSON.
+
+```bash
+RUN=aws-load-$(date +%Y%m%d-%H%M%S)
+
+jmeter -n \
+  -t performance/jmeter/question-detail-cache-test.jmx \
+  -Jhost=prototype-stackoverflow-alb-1028424928.us-east-2.elb.amazonaws.com \
+  -Jport=80 \
+  -JbasePath=/api \
+  -JquestionId=<DEPLOYED_QUESTION_ID> \
+  -Jthreads=20 \
+  -Jloops=100 \
+  -JrampUp=5 \
+  -l performance/results/$RUN.jtl \
+  -e \
+  -o performance/results/$RUN-report
+```
+
+Always verify the target manually before a run:
+
+```bash
+curl -i "http://<ALB_HOST>/api/questions/<QUESTION_ID>/detail"
+```
+
+It must return `HTTP 200` with `Content-Type: application/json`.
+
 ## Kafka Question Creation Test
 
 Plan:
