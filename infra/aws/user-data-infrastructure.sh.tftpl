@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y docker
+
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl --fail --location \
+  "https://github.com/docker/compose/releases/download/${docker_compose_version}/docker-compose-linux-x86_64" \
+  --output /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+install -d -o ec2-user -g ec2-user /opt/stackoverflow
+echo '${compose_file_base64}' | base64 --decode > /opt/stackoverflow/docker-compose.infrastructure.yml
+
+cat > /opt/stackoverflow/.env.infrastructure <<EOF
+MYSQL_DATABASE=stackoverflow_db
+MYSQL_USER=stackoverflow_user
+MYSQL_PASSWORD=${mysql_password}
+MYSQL_ROOT_PASSWORD=${mysql_root_password}
+INFRA_HOST=${infrastructure_host}
+ES_JAVA_OPTS=-Xms512m -Xmx512m
+EOF
+
+chmod 600 /opt/stackoverflow/.env.infrastructure
+cd /opt/stackoverflow
+docker compose --env-file .env.infrastructure -f docker-compose.infrastructure.yml up -d

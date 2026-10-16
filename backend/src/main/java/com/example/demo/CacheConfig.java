@@ -4,6 +4,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,5 +21,12 @@ public class CacheConfig {
                 "questionResponsesById",
                 "questionDetails"
         );
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "none")
+    @ConditionalOnMissingBean(CacheManager.class)
+    public CacheManager noOpCacheManager() {
+        return new NoOpCacheManager();
     }
 }

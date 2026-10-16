@@ -17,7 +17,10 @@ import com.example.demo.QuestionDetailResponse;
 import com.example.demo.QuestionRequest;
 import com.example.demo.QuestionResponse;
 import com.example.demo.QuestionWithAnswersDTO;
+import com.example.demo.User;
 import com.example.demo.service.QuestionService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/questions")
@@ -70,8 +73,10 @@ public List<QuestionWithAnswersDTO> getQuestionsWithAnswers() {
     }
 
     @PostMapping
-    public Question createQuestion(@RequestBody QuestionRequest request) {
-    return questionService.createQuestion(request);
+    public Question createQuestion(@RequestBody QuestionRequest request,
+                                   HttpServletRequest httpRequest) {
+        User user = (User) httpRequest.getAttribute("user");
+        return questionService.createQuestion(request, user);
 }
 
     @GetMapping("/{id}/detail")

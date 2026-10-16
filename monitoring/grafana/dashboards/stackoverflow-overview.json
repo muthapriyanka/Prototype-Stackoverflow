@@ -1,0 +1,86 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"stackoverflow\"}[1m]))", "legendFormat": "requests/sec", "refId": "A" }
+      ],
+      "title": "HTTP Request Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application=\"stackoverflow\"}[5m])))", "legendFormat": "p95", "refId": "A" },
+        { "expr": "sum(rate(http_server_requests_seconds_sum{application=\"stackoverflow\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"stackoverflow\"}[5m]))", "legendFormat": "average", "refId": "B" }
+      ],
+      "title": "HTTP Response Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{application=\"stackoverflow\",status=~\"5..\"}[1m]))", "legendFormat": "5xx errors/sec", "refId": "A" }
+      ],
+      "title": "HTTP Error Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "id": 4,
+      "targets": [
+        { "expr": "sum(jvm_memory_used_bytes{application=\"stackoverflow\",area=\"heap\"})", "legendFormat": "used heap", "refId": "A" },
+        { "expr": "sum(jvm_memory_max_bytes{application=\"stackoverflow\",area=\"heap\"})", "legendFormat": "max heap", "refId": "B" }
+      ],
+      "title": "JVM Heap Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "max": 1, "min": 0, "unit": "percentunit" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "id": 5,
+      "targets": [
+        { "expr": "process_cpu_usage{application=\"stackoverflow\"}", "legendFormat": "process CPU", "refId": "A" }
+      ],
+      "title": "Application CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "id": 6,
+      "targets": [
+        { "expr": "hikaricp_connections_active{application=\"stackoverflow\"}", "legendFormat": "active", "refId": "A" },
+        { "expr": "hikaricp_connections_idle{application=\"stackoverflow\"}", "legendFormat": "idle", "refId": "B" },
+        { "expr": "hikaricp_connections_pending{application=\"stackoverflow\"}", "legendFormat": "pending", "refId": "C" }
+      ],
+      "title": "Database Connection Pool",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": ["spring-boot", "prometheus", "learning"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "title": "Stack Overflow Prototype",
+  "uid": "stackoverflow-overview",
+  "version": 1
+}

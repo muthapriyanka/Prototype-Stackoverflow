@@ -1,0 +1,12 @@
+aws_account_id   = "448895342297"
+aws_region       = "us-east-2"
+instance_type    = "m7i-flex.large"
+root_volume_size = 40
+
+# HTTP is public by default. Restrict this during private testing if desired.
+http_cidrs = ["0.0.0.0/0"]
+
+# Session Manager is enabled, so SSH is optional. If you enable SSH, restrict it
+# to your own public IP and specify an existing EC2 key pair.
+# admin_ssh_cidr = "203.0.113.10/32"
+# key_name       = "my-existing-key-pair"

@@ -1,0 +1,50 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-app-backend}:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./backend
+    container_name: stackoverflow-backend
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://${INFRA_HOST}:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: ${INFRA_HOST}
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: ${INFRA_HOST}:9094
+      KAFKA_CONSUMER_GROUP_ID: stackoverflow-api-prod
+      STACKOVERFLOW_FEED_CONSUMER_GROUP: stackoverflow-feed-prod
+      STACKOVERFLOW_SEARCH_CONSUMER_GROUP: stackoverflow-search-indexer-prod
+      STACKOVERFLOW_NOTIFICATIONS_CONSUMER_GROUP: stackoverflow-notifications-prod
+      STACKOVERFLOW_EVENTS_TOPIC: stackoverflow.events
+      ELASTICSEARCH_URL: http://${INFRA_HOST}:9200
+      ELASTICSEARCH_INDEX: stackoverflow_questions
+      APP_KAFKA_ENABLED: "true"
+      APP_SEARCH_ENABLED: "true"
+      APP_DEMO_SEED_ENABLED: ${APP_DEMO_SEED_ENABLED:-false}
+      APP_VERSION: ${APP_IMAGE_TAG:-local}
+      SPRING_JPA_DDL_AUTO: update
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-app-frontend}:${APP_IMAGE_TAG:-local}
+    build:
+      context: ./stackoverflow-frontend
+      args:
+        REACT_APP_API_BASE_URL: /api
+        APP_VERSION: ${APP_IMAGE_TAG:-local}
+    container_name: stackoverflow-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"

@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y docker git openssl
+
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl --fail --location \
+  "https://github.com/docker/buildx/releases/download/${docker_buildx_version}/buildx-${docker_buildx_version}.linux-amd64" \
+  --output /usr/local/lib/docker/cli-plugins/docker-buildx
+curl --fail --location \
+  "https://github.com/docker/compose/releases/download/${docker_compose_version}/docker-compose-linux-x86_64" \
+  --output /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+install -d -o ec2-user -g ec2-user /opt/stackoverflow
+git clone --branch "${repository_branch}" --single-branch "${repository_url}" /opt/stackoverflow/app
+cd /opt/stackoverflow/app
+
+mysql_password="$(openssl rand -hex 24)"
+mysql_root_password="$(openssl rand -hex 24)"
+
+cat > .env.production <<EOF
+MYSQL_DATABASE=stackoverflow_db
+MYSQL_USER=stackoverflow_user
+MYSQL_PASSWORD=$mysql_password
+MYSQL_ROOT_PASSWORD=$mysql_root_password
+ES_JAVA_OPTS=-Xms512m -Xmx512m
+FRONTEND_PORT=80
+EOF
+
+chmod 600 .env.production
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build

@@ -7,6 +7,9 @@ RUN mvn -DskipTests package
 
 FROM eclipse-temurin:17-jre-alpine
 
+ARG APP_VERSION=local
+LABEL org.opencontainers.image.revision=$APP_VERSION
+
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 

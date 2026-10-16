@@ -12,6 +12,9 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 
+ARG APP_VERSION=local
+LABEL org.opencontainers.image.revision=$APP_VERSION
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build /usr/share/nginx/html
 

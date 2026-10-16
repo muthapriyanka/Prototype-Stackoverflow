@@ -1,8 +1,15 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen } from "@testing-library/react";
 
-test('renders learn react link', () => {
+jest.mock("axios", () => ({
+  create: () => ({ post: jest.fn() }),
+  get: jest.fn(),
+}));
+
+const App = require("./App").default;
+
+test("renders the login screen", () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
+  expect(screen.getByPlaceholderText("Username")).toBeInTheDocument();
+  expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
 });

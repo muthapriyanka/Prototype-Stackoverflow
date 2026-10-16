@@ -1,5 +1,7 @@
 # Prototype of Stackoverflow
 
+[![CI](https://github.com/muthapriyanka/Prototype-Stackoverflow/actions/workflows/ci.yml/badge.svg)](https://github.com/muthapriyanka/Prototype-Stackoverflow/actions/workflows/ci.yml)
+
 A production-shaped Stack Overflow learning project built to run locally with a
 real backend stack: Spring Boot, React, MySQL, Redis, Kafka, and Elasticsearch.
 
@@ -62,6 +64,23 @@ Spring Boot REST API
 - Messaging: Kafka
 - Search: Elasticsearch
 - Local infrastructure: Docker Compose
+- Continuous integration: GitHub Actions
+
+## Continuous Integration
+
+The workflow in `.github/workflows/ci.yml` runs for pushes and pull requests to
+`main`. It verifies the Spring Boot backend, tests and builds the React frontend,
+and confirms that both production Docker images can be built.
+
+After a successful push to `main`, the production job authenticates with the
+dedicated least-privilege GitHub Actions IAM user, publishes commit-tagged images
+to ECR, and updates one application node at a time through Systems Manager. Each
+node must report the new commit from `/api/actuator/info` and return to a healthy
+ALB state before the next node is updated.
+
+The production GitHub environment contains `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY`. These credentials must belong only to the restricted
+deployment user, never the broader `terraform-deployer` user.
 
 ## Local Services
 
@@ -281,6 +300,20 @@ docker compose --env-file .env.production -f docker-compose.prod.yml --profile t
 
 Then open `http://YOUR_SERVER_IP:8085` if your firewall allows that port.
 
+### AWS EC2 with Terraform
+
+The `infra/aws` Terraform module provisions a small multi-instance AWS deployment:
+
+- Application Load Balancer across two availability zones
+- Two `t3.small` nodes running the React frontend and Spring Boot API
+- One shared `c7i-flex.large` node running MySQL, Redis, Kafka, and Elasticsearch
+- Private service access controlled by security groups
+- Encrypted storage and access through AWS Systems Manager Session Manager
+
+Start with [infra/aws/README.md](infra/aws/README.md). Terraform does not create
+anything until you explicitly run `terraform apply`. EC2, storage, data transfer,
+and the load balancer can incur AWS charges.
+
 ## Project Structure
 
 ```text
@@ -288,6 +321,9 @@ backend/                 Spring Boot API
 stackoverflow-frontend/  React UI
 docker-compose.yml       Local MySQL, Redis, Kafka, Kafka UI, Elasticsearch
 docker-compose.prod.yml  Production full-stack Docker Compose
+docker-compose.app.yml    AWS application-node services
+docker-compose.infrastructure.yml  AWS shared data and messaging services
+infra/aws/                Terraform for the AWS multi-instance deployment
 scripts/                 Local demo seed data
 docs/assets/             README screenshots
 ```

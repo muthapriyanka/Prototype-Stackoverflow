@@ -6,6 +6,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import com.example.demo.QuestionResponse;
 import com.example.demo.QuestionWithAnswersDTO;
 import com.example.demo.Tag;
 import com.example.demo.TagDTO;
+import com.example.demo.User;
 import com.example.demo.Vote;
 import com.example.demo.repository.QuestionRepository;
 import com.example.demo.repository.TagRepository;
@@ -35,11 +39,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuestionService {
 
+    private static final Logger log = LoggerFactory.getLogger(QuestionService.class);
+
     private final QuestionRepository questionRepository;
     private final VoteRepository voteRepository;
     private final TagRepository tagRepository;
     private final CommentRepository commentRepository;
     private final KafkaEventProducer kafkaEventProducer;
+    private final FeedService feedService;
+    private final SearchService searchService;
+
+    @Value("${app.question.create-processing-mode:kafka}")
+    private String createProcessingMode;
 
     // No cache here: list/feed can change often
     public List<QuestionWithAnswersDTO> getAllQuestions() {
@@ -131,9 +142,14 @@ public class QuestionService {
 
     // New question has no questionDetails cache yet, so no cache eviction needed
     public Question createQuestion(QuestionRequest request) {
+        return createQuestion(request, null);
+    }
+
+    public Question createQuestion(QuestionRequest request, User user) {
         Question q = new Question();
         q.setTitle(request.getTitle());
         q.setBody(request.getBody());
+        q.setUser(user);
 
         Set<Tag> tagSet = new HashSet<>();
 
@@ -166,9 +182,28 @@ public class QuestionService {
         q.setTags(tagSet);
 
         Question saved = questionRepository.save(q);
-        kafkaEventProducer.publish(QuestionEvent.questionCreated(saved.getId(), null));
+        handleQuestionCreated(saved.getId());
 
         return saved;
+    }
+
+    private void handleQuestionCreated(String questionId) {
+        String mode = createProcessingMode == null
+                ? "kafka"
+                : createProcessingMode.trim().toLowerCase(Locale.ROOT);
+
+        switch (mode) {
+            case "sync" -> {
+                feedService.addQuestionToFeed(questionId);
+                searchService.indexQuestion(questionId);
+            }
+            case "none" -> log.info("Question create post-processing disabled for questionId={}", questionId);
+            case "kafka" -> kafkaEventProducer.publish(QuestionEvent.questionCreated(questionId, null));
+            default -> {
+                log.warn("Unknown question create processing mode '{}'. Falling back to Kafka.", createProcessingMode);
+                kafkaEventProducer.publish(QuestionEvent.questionCreated(questionId, null));
+            }
+        }
     }
 
     private String normalizeTagName(String tagName) {
